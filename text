@@ -86,4 +86,5 @@ class HospitalPatient(models.Model):
         result = super(HospitalPatient, self).create(vals)
         return result
 
+terwsoiuyterwaoiu[erwapu[pouerwapoierwapoierwapoi[]erwapoi[]erwterwpi[rw
 
