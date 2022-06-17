@@ -33,6 +33,21 @@ class HospitalPatient(models.Model):
                     self.age_group="major"
 
 
+    @api.constrains("patient_age")
+    def check_age(self):
+        for r in self:
+            if r.patient_age<=5:
+                raise exceptions.ValidationError("The age must be Greater then 5")
+
+    @api.depends("patient_age")
+    def set_age_group(self):
+        for r in self:
+            if r.patient_age:
+                if r.patient_age<18:
+                    self.age_group="minor"
+                else:
+                    self.age_group="major"
+
     patient_name = fields.Char(string="Name",requried=True)
     patient_age = fields.Integer("Age", track_visibility="always")
     notes = fields.Text(string="Notes")
