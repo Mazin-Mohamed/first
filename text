@@ -1,2 +1,74 @@
-hello world
+# -*- coding: utf-8 -*-
+
+from odoo import models, fields, api,exceptions,_
+
+from odoo.exceptions import ValidationError
+
+
+class SalesOrderInherit(models.Model):
+    _inherit = "sale.order"
+
+
+    patient_name = fields.Char(string="Patient Name")
+class HospitalPatient(models.Model):
+    _name = 'hospital.patient'
+    _description = 'patient Record'
+    _rec_name = "patient_name"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+
+
+    @api.constrains("patient_age")
+    def check_age(self):
+        for r in self:
+            if r.patient_age<=5:
+                raise exceptions.ValidationError("The age must be Greater then 5")
+
+    @api.depends("patient_age")
+    def set_age_group(self):
+        for r in self:
+            if r.patient_age:
+                if r.patient_age<18:
+                    self.age_group="minor"
+                else:
+                    self.age_group="major"
+
+
+    patient_name = fields.Char(string="Name",requried=True)
+    patient_age = fields.Integer("Age", track_visibility="always")
+    notes = fields.Text(string="Notes")
+    image = fields.Image(string="Image", widget='image', max_width=150, max_hight=150)
+    name_saq = fields.Char(string='Order Reference', required=True, copy=False, readonly=True, index=True,
+                           default=lambda self: ('New'))
+    appointment_count = fields.Integer(string="Appointment Count", compute="_get_appointment_count")
+    doctor_gender = fields.Selection([
+        ('male', 'Male'),
+        ('female', 'Female'),
+    ], string="Doctor Gender")
+    age_group = fields.Selection([
+        ('minor', 'Minor'),
+        ('major', 'Major'),
+    ], string="age group",compute="set_age_group")
+
+    def _get_appointment_count(self):
+        count = self.env['hospital.appointment'].search_count([('patient_id', '=', self.id)])  # مش عارف اعملها
+        self.appointment_count = count
+    def open_patient_appointment(self):  # فديو بتاع button types
+        return {
+                'name': _('Appointments'),
+                'domain': [('patient_id', '=', self.id)],
+                # 'view_type': 'form',
+                'res_model': 'hospital.appointment',
+                'view_id': False,
+                'view_model': 'tree,form',
+                'type': 'ir.actions.act_window',
+        }
+
+
+
+    def create(self, vals):
+        if not vals.get('name_saq') or vals['New'] == _('New'):
+            vals['name_saq'] = self.env['ir.sequence'].next_by_code('hospital.patient.sequence') or _('New')
+        result = super(HospitalPatient, self).create(vals)
+        return result
+
 
